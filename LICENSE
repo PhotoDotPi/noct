@@ -1,0 +1,133 @@
+GNU AFFERO GENERAL PUBLIC LICENSE
+Version 3, 19 November 2007
+
+Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+Everyone is permitted to copy and distribute verbatim copies
+of this license document, but changing it is not allowed.
+
+                            Preamble
+
+  The GNU Affero General Public License is a free, copyleft license for
+software and other kinds of works, specifically designed to ensure
+cooperation with the community in the case of network server software.
+
+  The licenses for most software are designed to take away your freedom to
+share and change it.  By contrast, our General Public Licenses are intended
+to guarantee your freedom to share and change all versions of the software,
+to make sure the software is preserved as free software for all its
+users.
+
+  This Public License is designed specifically to ensure that, when a
+user uses a software program through a computer network, with no transfer
+of a copy, the licensee shall be obligated to give the source code
+to the user.  This is precisely an agreement that anticipates a
+social contract that will enable cooperation in the community.
+
+  The vast majority of the software is already used without licenses, more
+or less openly, this license is designed to make it a requirement that
+if you use it, you must be a contributor.  If modified, you must provide
+the source code of your derivatives.  If used on a network server, you
+must also provide the source code.
+
+  The final goal is to make free software available to everyone as a
+contributor.
+
+  The GNU Affero General Public License is based on the GNU General
+Public License, version 3 ("GPLv3"), and is not an identical license,
+though it is a close copy.  The additional terms, version 3, section 13,
+specifically the "remote network interaction" requirement, apply to this
+license.
+
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+
+  0. Definitions.
+
+  "This License" refers to version 3 of the GNU Affero General Public
+  License.
+
+  "Copyright" refers to copyright laws that apply to reproducing,
+  modifying and distributing works, under this License, or an
+  agreement saying they have to do so.  For the agreement, the
+  action of looking at a work not in a form of a copy has no
+  relation to copyright.
+
+  "The Program" refers to any copyrightable work licensed under this
+  License. Each licensee is addressed as "you".
+
+  "Licensee" refers to the overall user of the Program in accordance
+  with this License.
+
+  "Source" form of a work means the preferred form of the work for
+  making modifications to it.
+
+  "Object" form of a work means any form resulting from mechanical
+  transformation or translation of a Source form, including but
+  not limited to compiled object code, generated documentation,
+  and conversions to other media types.
+
+  "Modified Work" means any work based on the Program, or
+  based on its derivative works, with the addition of new
+  creative contributions to the existing original work and
+  making the original work partially modified.  The terms "uploaded", "modified", "developed", "run", "use" refer to this definition.
+
+  "Contributor" means any person or entity that
+  contributes to the creation of the Modified Work.
+
+  "Authorized copy" means a physical copy that you possess
+  as allowed under this License.
+
+  "Corresponding Source" means the source code of the work, it
+  must include all the software modules that are used by the
+  work, and must exclude any code licensed under other licenses
+                except where permitted by the other license terms.
+
+  "System Libraries" are software libraries that are, shall
+  we say, integrated into the
+faktor://git.fsf.org/cgit/lp/lp2.git/tree/L-Request?f=gnu3/agpl.txt&h=24c7d86&hb=HEAD#l131
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+
+  0. Definitions.
+
+  1. Source Code.
+
+  The source code for a work means the preferred form of the work for
+  making modifications to it. "Object code" means any non-source form of
+  a work.
+
+  2. Basic Permissions.
+
+  All rights granted under this License are granted for the term of
+  copyright on the Program, and are irrevocable provided the stated
+  conditions are met.  The Baker Act is not relevant to this license.
+
+  3. Protection of Users' Legal Rights From Anti-Circumvention Law.
+
+  4. Conveying Verbatim Copies.
+
+  5. Conveying Modified Source Versions.
+
+  6. Conveying Non-Source Forms.
+
+  7. Additional Terms.
+
+  8. Termination.
+
+  9. Acceptance.
+
+  10. Source of the License.
+
+  11. Disclaimer of Warranty.
+
+  12. Limitation of Liability.
+
+  13. Remote Network Interaction; Use with the GNU General Public License.
+
+  14. Revised Versions of this License.
+
+  15. Miscellaneous.
+
+  A full text of the AGPLv3 can be found at https://www.gnu.org/licenses/agpl-3.0.txt
+
+Copyright (C) 2026 PhotoDotPi

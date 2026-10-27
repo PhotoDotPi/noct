@@ -1,0 +1,39 @@
+# Binaries
+/noct
+/noct.exe
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependency directories
+vendor/
+
+# Environment files
+.env
+.env.local
+
+# Generated visual inspection output (from TestVisualDump)
+/.visual/
