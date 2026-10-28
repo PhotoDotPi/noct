@@ -59,6 +59,7 @@ type Model struct {
 
 	queueFocused bool
 	queueSel     int
+	queueScroll  int
 
 	notifText string
 	notifKind notifKind
@@ -101,6 +102,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		l := computeLayout(m.width, m.height)
+		if !l.showQueue || len(m.queue.Upcoming()) == 0 {
+			m.queueFocused = false
+		}
+		m.clampQueueSelection()
 		return m, m.layout()
 
 	case tea.KeyMsg:
@@ -231,6 +237,20 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 		return nil
 	}
 
+	switch msg.String() {
+	case "ctrl+c":
+		return tea.Quit
+	case "q":
+		if m.mode != modeSearchInput {
+			return tea.Quit
+		}
+	case "?":
+		if m.mode != modeSearchInput {
+			m.helpOpen = true
+			return nil
+		}
+	}
+
 	if m.queueFocused {
 		if cmd := m.handleQueueKey(msg); cmd != nil {
 			return cmd
@@ -244,17 +264,6 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 	}
 
 	switch msg.String() {
-	case "ctrl+c":
-		return tea.Quit
-	case "q":
-		if m.mode != modeSearchInput {
-			return tea.Quit
-		}
-	case "?":
-		if m.mode != modeSearchInput {
-			m.helpOpen = true
-			return nil
-		}
 	case "tab":
 		if m.canFocusQueue() {
 			m.queueFocused = true
@@ -381,6 +390,8 @@ func (m *Model) handleQueueKey(msg tea.KeyMsg) tea.Cmd {
 	case "d", "x", "delete":
 		if m.queue.RemoveUpcoming(m.queueSel) {
 			m.pushNotif("Removed from queue")
+			m.clampQueueSelection()
+			return m.pushNotif("Removed from queue")
 		}
 		m.clampQueueSelection()
 		return nil
@@ -392,6 +403,7 @@ func (m *Model) handleQueueKey(msg tea.KeyMsg) tea.Cmd {
 				m.queueSel = len(m.queue.Upcoming()) - 1
 			}
 		}
+		m.clampQueueSelection()
 		return nil
 	case "K":
 		if m.queue.MoveUpcoming(m.queueSel, -1) {
@@ -399,13 +411,14 @@ func (m *Model) handleQueueKey(msg tea.KeyMsg) tea.Cmd {
 				m.queueSel--
 			}
 		}
+		m.clampQueueSelection()
 		return nil
 	case "c":
 		m.queue.ClearUpcoming()
 		m.queueFocused = false
 		m.queueSel = 0
-		m.pushNotif("Cleared queue")
-		return nil
+		m.queueScroll = 0
+		return m.pushNotif("Cleared queue")
 	}
 	return nil
 }
@@ -420,17 +433,37 @@ func (m *Model) canFocusQueue() bool {
 
 func (m *Model) clampQueueSelection() {
 	upcoming := m.queue.Upcoming()
-	if len(upcoming) == 0 {
+	l := computeLayout(m.width, m.height)
+	if !l.showQueue || len(upcoming) == 0 {
 		m.queueFocused = false
 		m.queueSel = 0
+		m.queueScroll = 0
 		return
 	}
 	if m.queueSel < 0 {
 		m.queueSel = 0
-		return
 	}
 	if m.queueSel >= len(upcoming) {
 		m.queueSel = len(upcoming) - 1
+	}
+	rows := l.queueRows - 4
+	if rows < 1 {
+		rows = 1
+	}
+	if m.queueSel < m.queueScroll {
+		m.queueScroll = m.queueSel
+	} else if m.queueSel >= m.queueScroll+rows {
+		m.queueScroll = m.queueSel - rows + 1
+	}
+	if m.queueScroll < 0 {
+		m.queueScroll = 0
+	}
+	maxScroll := len(upcoming) - rows
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+	if m.queueScroll > maxScroll {
+		m.queueScroll = maxScroll
 	}
 }
 
