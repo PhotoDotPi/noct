@@ -57,6 +57,10 @@ type Model struct {
 
 	helpOpen bool
 
+	queueFocused bool
+	queueSel     int
+	queueScroll  int
+
 	notifText string
 	notifKind notifKind
 
@@ -98,6 +102,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		l := computeLayout(m.width, m.height)
+		if !l.showQueue || len(m.queue.Upcoming()) == 0 {
+			m.queueFocused = false
+		}
+		m.clampQueueSelection()
 		return m, m.layout()
 
 	case tea.KeyMsg:
@@ -188,6 +197,7 @@ func (m Model) handlePlayerEvent(ev player.Event) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(cmds...)
 	case player.EventTrackFinished:
 		log.Default().Infof("track finished")
+		m.clampQueueSelection()
 		return m, tea.Batch(watchPlayerEvents(m.player), m.onTrackFinished())
 	case player.EventError:
 		m.lastError = errPlaybackProblem
@@ -204,10 +214,13 @@ func (m Model) handlePlayerEvent(ev player.Event) (tea.Model, tea.Cmd) {
 func (m *Model) onTrackFinished() tea.Cmd {
 	next, ok := m.queue.Next()
 	if ok {
+		m.clampQueueSelection()
 		log.Default().Infof("auto-advancing to %q", next.Title)
 		return tea.Batch(m.playCurrent(), m.pushNotif("Next: "+next.Title))
 	}
 	m.queue.ClearCurrent()
+	m.queueFocused = false
+	m.queueSel = 0
 	m.state.Playing = false
 	m.pushNotif("Queue finished")
 	log.Default().Infof("queue empty; playback stopped")
@@ -238,6 +251,33 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 		}
 	}
 
+	if m.queueFocused {
+		if cmd := m.handleQueueKey(msg); cmd != nil {
+			return cmd
+		}
+		switch msg.String() {
+		case "tab", "esc":
+			m.queueFocused = false
+			return nil
+		}
+		return nil
+	}
+
+	switch msg.String() {
+	case "tab":
+		if m.canFocusQueue() {
+			m.queueFocused = true
+			m.clampQueueSelection()
+			if len(m.queue.Upcoming()) > 0 && m.queueSel >= len(m.queue.Upcoming()) {
+				m.queueSel = len(m.queue.Upcoming()) - 1
+			}
+			if len(m.queue.Upcoming()) == 0 {
+				m.queueFocused = false
+			}
+			return nil
+		}
+	}
+
 	switch m.mode {
 
 	case modeSearchInput:
@@ -256,6 +296,7 @@ func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
 		if msg.String() == "/" {
 			m.mode = modeSearchInput
 			m.lastError = nil
+			m.queueFocused = false
 			return m.searchInput.focus()
 		}
 		m.lastError = nil
@@ -326,6 +367,106 @@ func (m *Model) updateResults(msg tea.KeyMsg) tea.Cmd {
 	return cmd
 }
 
+func (m *Model) handleQueueKey(msg tea.KeyMsg) tea.Cmd {
+	upcoming := m.queue.Upcoming()
+	if len(upcoming) == 0 {
+		m.queueFocused = false
+		m.queueSel = 0
+		return nil
+	}
+	m.clampQueueSelection()
+
+	switch msg.String() {
+	case "j", "down":
+		if m.queueSel < len(m.queue.Upcoming())-1 {
+			m.queueSel++
+		}
+		return nil
+	case "k", "up":
+		if m.queueSel > 0 {
+			m.queueSel--
+		}
+		return nil
+	case "d", "x", "delete":
+		if m.queue.RemoveUpcoming(m.queueSel) {
+			m.pushNotif("Removed from queue")
+			m.clampQueueSelection()
+			return m.pushNotif("Removed from queue")
+		}
+		m.clampQueueSelection()
+		return nil
+	case "J":
+		if m.queue.MoveUpcoming(m.queueSel, 1) {
+			if m.queueSel < len(m.queue.Upcoming())-1 {
+				m.queueSel++
+			} else {
+				m.queueSel = len(m.queue.Upcoming()) - 1
+			}
+		}
+		m.clampQueueSelection()
+		return nil
+	case "K":
+		if m.queue.MoveUpcoming(m.queueSel, -1) {
+			if m.queueSel > 0 {
+				m.queueSel--
+			}
+		}
+		m.clampQueueSelection()
+		return nil
+	case "c":
+		m.queue.ClearUpcoming()
+		m.queueFocused = false
+		m.queueSel = 0
+		m.queueScroll = 0
+		return m.pushNotif("Cleared queue")
+	}
+	return nil
+}
+
+func (m *Model) canFocusQueue() bool {
+	l := computeLayout(m.width, m.height)
+	if !l.showQueue {
+		return false
+	}
+	return len(m.queue.Upcoming()) > 0
+}
+
+func (m *Model) clampQueueSelection() {
+	upcoming := m.queue.Upcoming()
+	l := computeLayout(m.width, m.height)
+	if !l.showQueue || len(upcoming) == 0 {
+		m.queueFocused = false
+		m.queueSel = 0
+		m.queueScroll = 0
+		return
+	}
+	if m.queueSel < 0 {
+		m.queueSel = 0
+	}
+	if m.queueSel >= len(upcoming) {
+		m.queueSel = len(upcoming) - 1
+	}
+	rows := l.queueRows - 4
+	if rows < 1 {
+		rows = 1
+	}
+	if m.queueSel < m.queueScroll {
+		m.queueScroll = m.queueSel
+	} else if m.queueSel >= m.queueScroll+rows {
+		m.queueScroll = m.queueSel - rows + 1
+	}
+	if m.queueScroll < 0 {
+		m.queueScroll = 0
+	}
+	maxScroll := len(upcoming) - rows
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+	if m.queueScroll > maxScroll {
+		m.queueScroll = maxScroll
+	}
+}
+
 func (m *Model) adjustScroll() {
 	height := computeLayout(m.width, m.height).resultsH()
 	idx := m.results.Index()
@@ -361,10 +502,13 @@ func (m *Model) startPlayback() tea.Cmd {
 
 	if m.queue.Current() == nil {
 		m.queue.StartCurrent(track)
+		m.queueFocused = false
+		m.queueSel = 0
 		return tea.Batch(m.playCurrent(), m.pushNotif("Playing: "+r.Title))
 	}
 
 	m.queue.AddUpcoming(track)
+	m.clampQueueSelection()
 	m.pushNotif("Added to queue")
 	log.Default().Infof("track added to queue: %q", track.Title)
 	return nil
@@ -384,6 +528,10 @@ func (m *Model) nextTrack() tea.Cmd {
 	if !ok {
 		return nil
 	}
+	if m.queueFocused && m.queueSel > 0 {
+		m.queueSel--
+	}
+	m.clampQueueSelection()
 	log.Default().Infof("next track selected: %q", next.Title)
 	return tea.Batch(m.playCurrent(), m.pushNotif("Next: "+next.Title))
 }
@@ -397,6 +545,13 @@ func (m *Model) prevTrack() tea.Cmd {
 		log.Default().Infof("restarting current track: %q", m.queue.Current().Title)
 		return tea.Batch(m.playCurrent(), m.pushNotif("Restarting"))
 	case queue.PrevNavigate:
+		if m.queueFocused {
+			upcoming := m.queue.Upcoming()
+			if len(upcoming) > 0 {
+				m.queueSel = 0
+			}
+		}
+		m.clampQueueSelection()
 		log.Default().Infof("previous track selected: %q", m.queue.Current().Title)
 		return tea.Batch(m.playCurrent(), m.pushNotif("Previous"))
 	default:
