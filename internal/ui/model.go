@@ -528,6 +528,9 @@ func (m *Model) nextTrack() tea.Cmd {
 	if !ok {
 		return nil
 	}
+	if m.queueFocused && m.queueSel > 0 {
+		m.queueSel--
+	}
 	m.clampQueueSelection()
 	log.Default().Infof("next track selected: %q", next.Title)
 	return tea.Batch(m.playCurrent(), m.pushNotif("Next: "+next.Title))
@@ -542,6 +545,12 @@ func (m *Model) prevTrack() tea.Cmd {
 		log.Default().Infof("restarting current track: %q", m.queue.Current().Title)
 		return tea.Batch(m.playCurrent(), m.pushNotif("Restarting"))
 	case queue.PrevNavigate:
+		if m.queueFocused {
+			upcoming := m.queue.Upcoming()
+			if len(upcoming) > 0 {
+				m.queueSel = 0
+			}
+		}
 		m.clampQueueSelection()
 		log.Default().Infof("previous track selected: %q", m.queue.Current().Title)
 		return tea.Batch(m.playCurrent(), m.pushNotif("Previous"))
