@@ -82,6 +82,33 @@ func (q *Queue) HasPrevious() bool {
 	return len(q.history) > 0
 }
 
+func (q *Queue) RemoveUpcoming(i int) bool {
+	if i < 0 || i >= len(q.upcoming) {
+		return false
+	}
+	q.upcoming = append(q.upcoming[:i], q.upcoming[i+1:]...)
+	q.restarted = false
+	return true
+}
+
+func (q *Queue) MoveUpcoming(i, delta int) bool {
+	if delta == 0 {
+		return false
+	}
+	j := i + delta
+	if i < 0 || i >= len(q.upcoming) || j < 0 || j >= len(q.upcoming) {
+		return false
+	}
+	q.upcoming[i], q.upcoming[j] = q.upcoming[j], q.upcoming[i]
+	q.restarted = false
+	return true
+}
+
+func (q *Queue) ClearUpcoming() {
+	q.upcoming = nil
+	q.restarted = false
+}
+
 func (q *Queue) ClearCurrent() {
 	q.current = nil
 	q.restarted = false
